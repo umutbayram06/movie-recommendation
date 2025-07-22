@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Rate Movies</title>
+    <style>
+      /* For spinner */
+      #loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-100 text-gray-900 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl font-bold mb-6">
+        Rate Movies{% if user_id %} (User {{ user_id }}){% endif %}
+      </h1>
+      <div class="mb-6">
+        <label
+          for="genreFilter"
+          class="block text-sm font-medium text-gray-700 mb-1"
+          >Filter by Genre</label
+        >
+        <input
+          type="text"
+          id="genreFilter"
+          placeholder="e.g. comedy"
+          class="w-full border border-gray-300 rounded p-2"
+          oninput="resetAndFetch()"
+        />
+      </div>
+      <table
+        id="movies-table"
+        class="w-full bg-white rounded shadow overflow-hidden"
+      >
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="p-3 text-left">Title</th>
+            <th class="p-3 text-left">Genres</th>
+            <th class="p-3 text-left">Your Rating</th>
+          </tr>
+        </thead>
+        <tbody id="movies-body">
+          <!-- movies will be appended here -->
+        </tbody>
+      </table>
+
+      <div id="loading-spinner">
+        <p>Loading...</p>
+      </div>
+    </div>
+
+    <script>
+      const userId = "{{ user_id }}";
+      const moviesBody = document.getElementById("movies-body");
+      const spinner = document.getElementById("loading-spinner");
+      const genreInput = document.getElementById("genreFilter");
+
+      let offset = 0;
+      const limit = 20;
+      let loading = false;
+      let allLoaded = false;
+      let currentGenre = "";
+
+      async function fetchMovies() {
+        if (loading || allLoaded) return;
+        loading = true;
+        spinner.style.display = "block";
+
+        try {
+          const genre = encodeURIComponent(currentGenre);
+          const res = await fetch(
+            `/movies/api?offset=${offset}&limit=${limit}&genre=${genre}`
+          );
+          if (!res.ok) throw new Error("Failed to fetch movies");
+
+          const data = await res.json();
+          const movies = data.movies;
+          const ratings = data.user_ratings;
+
+          if (movies.length === 0) {
+            allLoaded = true;
+          } else {
+            movies.forEach((movie) => {
+              const tr = document.createElement("tr");
+              tr.classList.add("border-t");
+
+              const rating = ratings[movie.movieid] ?? "";
+
+              tr.innerHTML = `
+            <td class="p-3">${movie.title}</td>
+            <td class="p-3 text-gray-600">${movie.genres}</td>
+            <td class="p-3">
+                <div class="flex items-center space-x-2">
+                <input type="range" min="0" max="5" step="0.1"
+                        class="rating-slider w-32"
+                        data-movieid="${movie.movieid}"
+                        value="${rating}">
+                <span class="rating-value text-sm text-gray-700">${
+                  rating || "0.0"
+                }</span>
+                </div>
+            </td>
+          `;
+              moviesBody.appendChild(tr);
+            });
+            offset += movies.length;
+            attachListeners();
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          loading = false;
+          spinner.style.display = "none";
+        }
+      }
+
+      function resetAndFetch() {
+        currentGenre = genreInput.value.trim().toLowerCase();
+        offset = 0;
+        allLoaded = false;
+        moviesBody.innerHTML = "";
+        fetchMovies();
+      }
+
+      function attachListeners() {
+        document.querySelectorAll(".rating-slider").forEach((slider) => {
+          if (slider.dataset.listenerAttached) return;
+          slider.dataset.listenerAttached = true;
+
+          const label = slider.nextElementSibling;
+          slider.addEventListener("input", () => {
+            label.textContent = slider.value;
+          });
+
+          slider.addEventListener("change", async () => {
+            if (!userId) {
+              alert("User not identified. Please sign in first.");
+              return;
+            }
+
+            const movieId = slider.dataset.movieid;
+            const rating = parseFloat(slider.value);
+
+            try {
+              const response = await fetch("/rate", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userid: parseInt(userId),
+                  movieid: parseInt(movieId),
+                  rating: rating,
+                }),
+              });
+
+              if (!response.ok) alert("Failed to save rating");
+            } catch {
+              alert("Network error while saving rating");
+            }
+          });
+        });
+      }
+
+      // Load initial batch
+      fetchMovies();
+
+      // Infinite scroll handler
+      window.addEventListener("scroll", () => {
+        if (
+          window.innerHeight + window.scrollY >=
+          document.body.offsetHeight - 200
+        ) {
+          fetchMovies();
+        }
+      });
+    </script>
+  </body>
+</html>

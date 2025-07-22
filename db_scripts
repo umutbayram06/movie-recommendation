@@ -1,0 +1,45 @@
+CREATE TABLE public.movies (
+	movieid int4 NOT NULL,
+	title text NOT NULL,
+	genres text NULL,
+	CONSTRAINT movies_pkey PRIMARY KEY (movieid)
+);
+
+
+CREATE TABLE public.ratings (
+	userid int4 NULL,
+	movieid int4 NULL,
+	rating numeric(3, 1) NULL,
+	"timestamp" int8 NULL,
+	CONSTRAINT ratings_userid_movieid_unique UNIQUE (userid, movieid)
+);
+
+CREATE TABLE public.recommendations_cbf (
+	user_id int4 NOT NULL,
+	movie_id int4 NOT NULL,
+	cbf_score float4 NULL,
+	title text NULL,
+	genres text NULL,
+	CONSTRAINT recommendations_cbf_pkey PRIMARY KEY (user_id, movie_id)
+);
+
+CREATE TABLE public.recommendations_cf (
+	user_id int4 NOT NULL,
+	movie_id int4 NOT NULL,
+	cf_score float4 NOT NULL,
+	title text NULL,
+	genres text NULL,
+	CONSTRAINT recommendations_cf_pkey PRIMARY KEY (user_id, movie_id)
+);
+
+CREATE TABLE public.users (
+	userid serial4 NOT NULL,
+	username text NOT NULL,
+	CONSTRAINT users_pkey PRIMARY KEY (userid)
+);
+
+INSERT INTO users (username) VALUES
+('Alice'), ('Bob'), ('Carol'), ('Dave'), ('Eve'),
+('Frank'), ('Grace'), ('Hank'), ('Iris'), ('Jack'),
+('Kate'), ('Leo'), ('Mia'), ('Nate'), ('Olga'),
+('Paul'), ('Quinn'), ('Rita'), ('Sam'), ('Tom');

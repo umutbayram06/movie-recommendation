@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Movie Recommendations for User {{ user_id }}</title>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen p-6">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Movie Recommendations for User {{ user_id }}</h1>
+
+    <section class="mb-10">
+      <h2 class="text-2xl font-semibold mb-4">Collaborative Filtering Recommendations</h2>
+      {% if cf_recs %}
+        <ul class="space-y-3">
+          {% for movie in cf_recs %}
+            <li class="bg-white p-4 rounded shadow">
+              <h3 class="text-xl font-semibold">{{ movie.title }}</h3>
+              <p class="text-gray-600">{{ movie.genres }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-600 italic">No collaborative filtering recommendations available.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-4">Content-Based Filtering Recommendations</h2>
+      {% if cbf_recs %}
+        <ul class="space-y-3">
+          {% for movie in cbf_recs %}
+            <li class="bg-white p-4 rounded shadow">
+              <h3 class="text-xl font-semibold">{{ movie.title }}</h3>
+              <p class="text-gray-600">{{ movie.genres }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-600 italic">No content-based filtering recommendations available.</p>
+      {% endif %}
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+Configure kafka and Start
+bin/kafka-storage.sh format -t $(uuidgen) -c config/kraft/server.properties
+bin/kafka-server-start.sh config/kraft/server.properties
+bin/kafka-topics.sh --create --topic ratings --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic ratings
+bin/kafka-console-producer.sh --topic ratings --bootstrap-server localhost:9092
+bin/kafka-console-consumer.sh --topic ratings --bootstrap-server localhost:9092 --from-beginning
+
+
+Start spark with kafka
+spark-submit --driver-memory 8g --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.0,org.postgresql:postgresql:42.7.1 kafka_pyspark.py
